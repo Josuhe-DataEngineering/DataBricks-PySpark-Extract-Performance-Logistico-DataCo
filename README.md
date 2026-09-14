@@ -1,9 +1,9 @@
 <div align="center">
 
-# 🚚 Performance Logístico & Riesgo de Entrega
-### Pipeline ELT · Arquitectura Data Lakehouse · Databricks
+# 馃殮 Performance Log铆stico & Riesgo de Entrega
+### Pipeline ELT 路 Arquitectura Data Lakehouse 路 Databricks
 
-*Automatización end-to-end del reporte semanal de performance logístico y riesgo de entrega por región, migrando un proceso manual en Excel a un pipeline gobernado, idempotente y trazable sobre Unity Catalog.*
+*Automatizaci贸n end-to-end del reporte semanal de performance log铆stico y riesgo de entrega por regi贸n, migrando un proceso manual en Excel a un pipeline gobernado, idempotente y trazable sobre Unity Catalog.*
 
 <br>
 
@@ -16,97 +16,97 @@
 ![Architecture](https://img.shields.io/badge/architecture-Medallion-blue?style=flat-square)
 ![Orchestration](https://img.shields.io/badge/orchestration-Lakeflow_Jobs-orange?style=flat-square)
 ![Compute](https://img.shields.io/badge/compute-Serverless-green?style=flat-square)
-![Status](https://img.shields.io/badge/status-Producción-success?style=flat-square)
+![Status](https://img.shields.io/badge/status-Producci贸n-success?style=flat-square)
 
 </div>
 
 ---
 
-## 📌 Tabla de contenidos
+## 馃搶 Tabla de contenidos
 
 - [Contexto del negocio](#-contexto-del-negocio)
-- [Arquitectura de la solución](#-arquitectura-de-la-solución)
-- [Tubería de datos de extremo a extremo](#-tubería-de-datos-de-extremo-a-extremo)
+- [Arquitectura de la soluci贸n](#-arquitectura-de-la-soluci贸n)
+- [Tuber铆a de datos de extremo a extremo](#-tuber铆a-de-datos-de-extremo-a-extremo)
 - [Las capas del Lakehouse](#-las-capas-del-lakehouse)
 - [Modelo dimensional (Gold)](#-modelo-dimensional-gold)
 - [Indicadores de negocio](#-indicadores-de-negocio)
 - [Trazabilidad y manejo de errores](#-trazabilidad-y-manejo-de-errores)
 - [Idempotencia y control de cortes](#-idempotencia-y-control-de-cortes)
-- [Organización del repositorio](#-organización-del-repositorio)
-- [Cómo ejecutar](#-cómo-ejecutar)
-- [Stack técnico](#-stack-técnico)
+- [Organizaci贸n del repositorio](#-organizaci贸n-del-repositorio)
+- [C贸mo ejecutar](#-c贸mo-ejecutar)
+- [Stack t茅cnico](#-stack-t茅cnico)
 
 ---
 
-## 🎯 Contexto del negocio
+## 馃幆 Contexto del negocio
 
-El área de Operaciones construía **manualmente en Excel** un reporte semanal de performance logístico, cruzando exports del ERP en un proceso que consumía **2–3 horas por analista** cada semana y generaba **cifras inconsistentes** entre áreas por trabajar con cortes distintos del mismo dato.
+El 谩rea de Operaciones constru铆a **manualmente en Excel** un reporte semanal de performance log铆stico, cruzando exports del ERP en un proceso que consum铆a **2鈥? horas por analista** cada semana y generaba **cifras inconsistentes** entre 谩reas por trabajar con cortes distintos del mismo dato.
 
-Este proyecto reemplaza ese proceso con un **pipeline ELT automatizado** que consolida la información con periodicidad semanal, permitiendo a Supply Chain y a las gerencias regionales tomar decisiones oportunas sobre priorización de envíos, selección de modos de transporte y gestión de reclamos por entregas tardías.
+Este proyecto reemplaza ese proceso con un **pipeline ELT automatizado** que consolida la informaci贸n con periodicidad semanal, permitiendo a Supply Chain y a las gerencias regionales tomar decisiones oportunas sobre priorizaci贸n de env铆os, selecci贸n de modos de transporte y gesti贸n de reclamos por entregas tard铆as.
 
-| Antes | Después |
+| Antes | Despu茅s |
 |:---|:---|
-| 2–3 horas semanales de trabajo manual | Ejecución automatizada y orquestada |
-| Cifras distintas entre áreas | Una única fuente de verdad gobernada |
-| Reacción a alertas en 48–72 h | Detección en la misma ejecución |
+| 2鈥? horas semanales de trabajo manual | Ejecuci贸n automatizada y orquestada |
+| Cifras distintas entre 谩reas | Una 煤nica fuente de verdad gobernada |
+| Reacci贸n a alertas en 48鈥?2 h | Detecci贸n en la misma ejecuci贸n |
 | Riesgo de error por copy/paste | Proceso idempotente y reproducible |
 
 ---
 
-## 🏛 Arquitectura de la solución
+## 馃彌 Arquitectura de la soluci贸n
 
-La solución implementa una **arquitectura Data Lakehouse** con el patrón **Medallion (Bronze → Silver → Gold)** sobre **Databricks**, gobernada de extremo a extremo por **Unity Catalog** y ejecutada sobre **compute serverless**.
+La soluci贸n implementa una **arquitectura Data Lakehouse** con el patr贸n **Medallion (Bronze 鈫?Silver 鈫?Gold)** sobre **Databricks**, gobernada de extremo a extremo por **Unity Catalog** y ejecutada sobre **compute serverless**.
 
-Toda la plataforma vive bajo un único catálogo de gobierno, `prod_dataco`, organizado por esquemas que representan cada capa y el dominio de control:
+Toda la plataforma vive bajo un 煤nico cat谩logo de gobierno, `prod_dataco`, organizado por esquemas que representan cada capa y el dominio de control:
 
 ```
 prod_dataco
-├── brz_dataco     → Capa Bronze  (ingesta cruda en Delta)
-├── slv_dataco     → Capa Silver  (limpieza, tipificación, normalización)
-├── gld_dataco     → Capa Gold    (modelo dimensional + KPIs de negocio)
-└── metadata       → Control del pipeline (etl_log, pipeline_control, ejecucion_control)
+鈹溾攢鈹€ brz_dataco     鈫?Capa Bronze  (ingesta cruda en Delta)
+鈹溾攢鈹€ slv_dataco     鈫?Capa Silver  (limpieza, tipificaci贸n, normalizaci贸n)
+鈹溾攢鈹€ gld_dataco     鈫?Capa Gold    (modelo dimensional + KPIs de negocio)
+鈹斺攢鈹€ metadata       鈫?Control del pipeline (etl_log, pipeline_control, ejecucion_control)
 ```
 
 > **Principio rector:** los datos se enriquecen y ganan valor de negocio conforme ascienden de capa, mientras que la gobernanza, la trazabilidad y la calidad se aplican de forma consistente en todo el recorrido.
 
 ---
 
-## 🔀 Tubería de datos de extremo a extremo
+## 馃攢 Tuber铆a de datos de extremo a extremo
 
-El dato fluye de arriba hacia abajo, ganando estructura y valor de negocio en cada capa — desde el archivo crudo en SharePoint hasta el reporte que llega al buzón del equipo de negocio.
+El dato fluye de arriba hacia abajo, ganando estructura y valor de negocio en cada capa 鈥?desde el archivo crudo en SharePoint hasta el reporte que llega al buz贸n del equipo de negocio.
 
 ```mermaid
 flowchart TB
-    SP[("📥 &nbsp;SharePoint<br/><b>DataCo CSV</b>")]
+    SP[("馃摜 &nbsp;SharePoint<br/><b>DataCo CSV</b>")]
 
-    PREP["⚙️ &nbsp;<b>prepare_pipeline_control</b><br/><i>valida corte · genera id_ejecución</i>"]
+    PREP["鈿欙笍 &nbsp;<b>prepare_pipeline_control</b><br/><i>valida corte 路 genera id_ejecuci贸n</i>"]
 
-    subgraph BRZ["🥉 &nbsp;BRONZE &nbsp;·&nbsp; ingesta cruda gobernada"]
+    subgraph BRZ["馃 &nbsp;BRONZE &nbsp;路&nbsp; ingesta cruda gobernada"]
         direction TB
         ING["<b>ingest_sharepoint_bronze</b><br/><i>Delta crudo + trazabilidad</i>"]
     end
 
-    subgraph SLV["🥈 &nbsp;SILVER &nbsp;·&nbsp; limpieza · tipificación · normalización"]
+    subgraph SLV["馃 &nbsp;SILVER &nbsp;路&nbsp; limpieza 路 tipificaci贸n 路 normalizaci贸n"]
         direction LR
-        C["👤<br/>Clientes"]
-        P["📦<br/>Productos"]
-        U["🌎<br/>Ubicaciones"]
-        PED["🧾<br/>Pedidos"]
-        DET["📋<br/>Detalle"]
+        C["馃懁<br/>Clientes"]
+        P["馃摝<br/>Productos"]
+        U["馃寧<br/>Ubicaciones"]
+        PED["馃Ь<br/>Pedidos"]
+        DET["馃搵<br/>Detalle"]
     end
 
-    subgraph GLD["🥇 &nbsp;GOLD &nbsp;·&nbsp; modelo dimensional + KPIs"]
+    subgraph GLD["馃 &nbsp;GOLD &nbsp;路&nbsp; modelo dimensional + KPIs"]
         direction TB
-        DIM["⭐ &nbsp;<b>Dimensiones</b><br/><i>cliente · producto · ubicación · fecha</i>"]
-        FACT["📊 &nbsp;<b>Hechos</b><br/><i>pedidos · detalle</i>"]
-        KPI["🎯 &nbsp;<b>7 KPIs & Vistas</b><br/><i>resumen · región · orden · alertas</i>"]
+        DIM["猸?&nbsp;<b>Dimensiones</b><br/><i>cliente 路 producto 路 ubicaci贸n 路 fecha</i>"]
+        FACT["馃搳 &nbsp;<b>Hechos</b><br/><i>pedidos 路 detalle</i>"]
+        KPI["馃幆 &nbsp;<b>7 KPIs & Vistas</b><br/><i>resumen 路 regi贸n 路 orden 路 alertas</i>"]
         DIM --> KPI
         FACT --> KPI
     end
 
-    XLS["📗 &nbsp;<b>Reporte Excel</b><br/><i>4 pestañas + formato condicional</i>"]
-    MAIL["📧 &nbsp;<b>Envío automático</b><br/><i>lunes · antes de las 8:00 am</i>"]
-    FIN["✅ &nbsp;<b>finalize_pipeline_control</b><br/><i>marca ejecución válida</i>"]
+    XLS["馃摋 &nbsp;<b>Reporte Excel</b><br/><i>4 pesta帽as + formato condicional</i>"]
+    MAIL["馃摟 &nbsp;<b>Env铆o autom谩tico</b><br/><i>lunes 路 antes de las 8:00 am</i>"]
+    FIN["鉁?&nbsp;<b>finalize_pipeline_control</b><br/><i>marca ejecuci贸n v谩lida</i>"]
 
     SP --> PREP --> ING
     ING --> C & P & U & PED & DET
@@ -130,41 +130,41 @@ flowchart TB
 
 <div align="center">
 
-`SharePoint` → `Control` → 🥉 `Bronze` → 🥈 `Silver` → 🥇 `Gold` → 📗 `Excel` → 📧 `Correo`
+`SharePoint` 鈫?`Control` 鈫?馃 `Bronze` 鈫?馃 `Silver` 鈫?馃 `Gold` 鈫?馃摋 `Excel` 鈫?馃摟 `Correo`
 
 </div>
 
-Tras el cálculo de los KPIs, la capa Gold materializa un **reporte Excel de 4 pestañas** (Resumen Ejecutivo, Detalle Región, Detalle Orden y Alertas) con formato condicional, que se **distribuye automáticamente por correo** al grupo de negocio cada lunes antes de las 8:00 am.
+Tras el c谩lculo de los KPIs, la capa Gold materializa un **reporte Excel de 4 pesta帽as** (Resumen Ejecutivo, Detalle Regi贸n, Detalle Orden y Alertas) con formato condicional, que se **distribuye autom谩ticamente por correo** al grupo de negocio cada lunes antes de las 8:00 am.
 
-Cada tarea del pipeline está acompañada de un **task dedicado de manejo de errores** que se dispara únicamente ante una falla, garantizando visibilidad granular por etapa (ver [Trazabilidad y manejo de errores](#-trazabilidad-y-manejo-de-errores)).
+Cada tarea del pipeline est谩 acompa帽ada de un **task dedicado de manejo de errores** que se dispara 煤nicamente ante una falla, garantizando visibilidad granular por etapa (ver [Trazabilidad y manejo de errores](#-trazabilidad-y-manejo-de-errores)).
 
 ---
 
-## 🧱 Las capas del Lakehouse
+## 馃П Las capas del Lakehouse
 
-### 🥉 Bronze — Ingesta cruda gobernada
+### 馃 Bronze 鈥?Ingesta cruda gobernada
 
-Extrae el dataset desde SharePoint (vía Microsoft Graph) correspondiente al corte validado, y lo persiste en **Delta** sin transformar, conservando la trazabilidad completa de la ejecución y del archivo de origen.
+Extrae el dataset desde SharePoint (v铆a Microsoft Graph) correspondiente al corte validado, y lo persiste en **Delta** sin transformar, conservando la trazabilidad completa de la ejecuci贸n y del archivo de origen.
 
 - Formato **Delta** desde el primer aterrizaje del dato.
 - Metadatos de trazabilidad embebidos: `fecha_inicio_corte`, `fecha_fin_corte`, `fecha_carga`, `id_ejecucion`, `origen`, `archivo_origen`.
 - **Control de duplicidad de corte:** si el corte ya existe, no se reinsertan registros.
 
-### 🥈 Silver — Limpieza, tipificación y normalización
+### 馃 Silver 鈥?Limpieza, tipificaci贸n y normalizaci贸n
 
-Descompone el dataset ancho de 53 columnas en **entidades independientes por dominio**, aplicando limpieza (`trim` + mayúsculas), tipificación de fechas y montos, y deduplicación por llave natural.
+Descompone el dataset ancho de 53 columnas en **entidades independientes por dominio**, aplicando limpieza (`trim` + may煤sculas), tipificaci贸n de fechas y montos, y deduplicaci贸n por llave natural.
 
-| Entidad | Grano | Estrategia de deduplicación |
+| Entidad | Grano | Estrategia de deduplicaci贸n |
 |:---|:---|:---|
 | **Clientes** | 1 registro por cliente | Una fila por cliente |
 | **Productos** | 1 registro por producto | Una fila por producto |
-| **Ubicaciones** | Combinación única de 6 columnas geográficas | Corte más reciente |
-| **Pedidos** | 1 registro por pedido | Corte más reciente |
-| **Detalle de Pedido** | 1 registro por línea de pedido | Corte más reciente |
+| **Ubicaciones** | Combinaci贸n 煤nica de 6 columnas geogr谩ficas | Corte m谩s reciente |
+| **Pedidos** | 1 registro por pedido | Corte m谩s reciente |
+| **Detalle de Pedido** | 1 registro por l铆nea de pedido | Corte m谩s reciente |
 
-> Silver mantiene la granularidad completa **sin agregaciones**. Los filtros de negocio específicos por indicador se aplican en Gold.
+> Silver mantiene la granularidad completa **sin agregaciones**. Los filtros de negocio espec铆ficos por indicador se aplican en Gold.
 
-### 🥇 Gold — Modelo dimensional y KPIs de negocio
+### 馃 Gold 鈥?Modelo dimensional y KPIs de negocio
 
 Consolida las entidades de Silver en un **modelo dimensional tipo estrella** y calcula los indicadores de negocio, materializando las vistas de consumo final.
 
@@ -172,21 +172,21 @@ Consolida las entidades de Silver en un **modelo dimensional tipo estrella** y c
 
 | Vista | Grano | Uso |
 |:---|:---|:---|
-| **Resumen Ejecutivo** | Por mercado (market) | KPIs totalizados + variación semanal |
-| **Detalle Región** | Región + modo de envío | Los 7 indicadores desglosados |
-| **Detalle Orden** | Máximo detalle | Análisis puntual y reclamos |
-| **Alertas** | Órdenes de riesgo crítico | Riesgo tardío en regiones bajo umbral |
+| **Resumen Ejecutivo** | Por mercado (market) | KPIs totalizados + variaci贸n semanal |
+| **Detalle Regi贸n** | Regi贸n + modo de env铆o | Los 7 indicadores desglosados |
+| **Detalle Orden** | M谩ximo detalle | An谩lisis puntual y reclamos |
+| **Alertas** | 脫rdenes de riesgo cr铆tico | Riesgo tard铆o en regiones bajo umbral |
 
 ---
 
-## ⭐ Modelo dimensional (Gold)
+## 猸?Modelo dimensional (Gold)
 
 ```mermaid
 erDiagram
     FACT_PEDIDOS }o--|| DIM_CLIENTE : "cliente"
-    FACT_PEDIDOS }o--|| DIM_UBICACION : "región/mercado"
+    FACT_PEDIDOS }o--|| DIM_UBICACION : "regi贸n/mercado"
     FACT_PEDIDOS }o--|| DIM_FECHA : "fecha de pedido"
-    FACT_PEDIDOS ||--o{ FACT_DETALLE : "líneas"
+    FACT_PEDIDOS ||--o{ FACT_DETALLE : "l铆neas"
     FACT_DETALLE }o--|| DIM_PRODUCTO : "producto"
 
     DIM_CLIENTE {
@@ -224,123 +224,128 @@ erDiagram
 
 ---
 
-## 📊 Indicadores de negocio
+## 馃搳 Indicadores de negocio
 
-Los **7 indicadores** replicados desde el proceso manual, con tolerancia de diferencia ≤ 0.5% por redondeos:
+Los **7 indicadores** replicados desde el proceso manual, con tolerancia de diferencia 鈮?0.5% por redondeos:
 
 | # | Indicador | Granularidad |
 |:---:|:---|:---|
-| 1 | **On-Time Delivery %** | Región + modo de envío |
-| 2 | **Late Delivery Risk %** | Región (con validación cruzada) |
-| 3 | **Shipping Variance** | Promedio por región |
-| 4 | **Profit Margin %** | Orden (resalta pérdidas) |
+| 1 | **On-Time Delivery %** | Regi贸n + modo de env铆o |
+| 2 | **Late Delivery Risk %** | Regi贸n (con validaci贸n cruzada) |
+| 3 | **Shipping Variance** | Promedio por regi贸n |
+| 4 | **Profit Margin %** | Orden (resalta p茅rdidas) |
 | 5 | **Revenue por Cliente** | Segmento de cliente |
 | 6 | **Beneficio por Orden** | Orden |
-| 7 | **Lead Time Promedio** | Modo de envío |
+| 7 | **Lead Time Promedio** | Modo de env铆o |
 
 **Reglas de negocio aplicadas en Gold:**
 
-- Agrupaciones regionales: `GLOBAL = LATAM + Europe + USCA + Pacific Asia + Africa` · `AMERICAS = LATAM + USCA`
-- Se excluyen las órdenes canceladas del cálculo.
-- Las órdenes sospechosas de fraude se incluyen pero se marcan.
-- Los envíos cancelados se muestran en el detalle pero no entran a On-Time Delivery ni Lead Time.
+- Agrupaciones regionales: `GLOBAL = LATAM + Europe + USCA + Pacific Asia + Africa` 路 `AMERICAS = LATAM + USCA`
+- Se excluyen las 贸rdenes canceladas del c谩lculo.
+- Las 贸rdenes sospechosas de fraude se incluyen pero se marcan.
+- Los env铆os cancelados se muestran en el detalle pero no entran a On-Time Delivery ni Lead Time.
 
 ---
 
-## 🔎 Trazabilidad y manejo de errores
+## 馃攷 Trazabilidad y manejo de errores
 
 Cada etapa del pipeline registra su ciclo de vida en la tabla de control `metadata.etl_log`, siguiendo el flujo de estados:
 
 ```
-EN_PROCESO  ──▶  EXITOSO
-     │
-     └────────▶  ERROR   (capturado por el task de error dedicado)
+EN_PROCESO  鈹€鈹€鈻? EXITOSO
+     鈹?     鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈻? ERROR   (capturado por el task de error dedicado)
 ```
 
-**Patrón de manejo de errores por etapa:** cada tarea de negocio tiene un **task de log de error asociado** que se ejecuta únicamente si la tarea principal falla. Este task:
+**Patr贸n de manejo de errores por etapa:** cada tarea del pipeline (control, ingesta y las 5 tablas Silver) tiene un **task de log de error asociado** que se ejecuta 煤nicamente si la tarea principal falla. Este task:
 
-1. Recupera el `log_id` de la ejecución fallida vía Task Values.
-2. Consulta el detalle técnico de la excepción mediante la **Databricks Jobs API** (`runs/get-output`), usando *dynamic value references* (`run_id`, `error_code`, `result_state`).
-3. Actualiza el registro en `etl_log` con estado `ERROR`, la marca de tiempo de finalización y la traza técnica del error.
+1. Recupera el `log_id` de la ejecuci贸n fallida v铆a Task Values.
+2. Consulta el detalle t茅cnico de la excepci贸n mediante la **Databricks Jobs API** (`runs/get-output`), usando *dynamic value references* (`run_id`, `error_code`, `result_state`).
+3. Actualiza el registro en `etl_log` con estado `ERROR`, la marca de tiempo de finalizaci贸n y la traza t茅cnica del error.
+4. Env铆a una **alerta en tiempo real a Slack** v铆a Incoming Webhook, con el detalle del task, el `run_id` y el `log_id` 鈥?sin exponer la URL del webhook en el c贸digo (se lee de un secret scope de Databricks). *Implementado en los 5 notebooks de error de Silver; pendiente de replicar en los 3 de control (`prepare`/`ingest`/`finalize`).*
 
 ```mermaid
 flowchart LR
-    T["Task de negocio"] -->|éxito| OK["etl_log: EXITOSO"]
+    T["Task de negocio"] -->|茅xito| OK["etl_log: EXITOSO"]
     T -->|falla| ERR["Task de log de error"]
     ERR --> API["Jobs API<br/>runs/get-output"]
-    API --> LOG["etl_log: ERROR<br/><i>+ traza técnica</i>"]
+    API --> LOG["etl_log: ERROR<br/><i>+ traza t茅cnica</i>"]
+    LOG --> SLACK["馃敂 Alerta a Slack<br/><i>Incoming Webhook</i>"]
 
     classDef ok fill:#1B4332,stroke:#40916C,color:#fff
     classDef err fill:#4A1010,stroke:#E63946,color:#fff
     class OK ok
-    class ERR,API,LOG err
+    class ERR,API,LOG,SLACK err
 ```
 
-Cada `id_ejecucion` identifica una corrida completa del workflow, mientras que cada `log_id` identifica la ejecución específica de un notebook — permitiendo trazabilidad **de extremo a extremo** y diagnóstico granular por etapa.
+Cada `id_ejecucion` identifica una corrida completa del workflow, mientras que cada `log_id` identifica la ejecuci贸n espec铆fica de un notebook 鈥?permitiendo trazabilidad **de extremo a extremo** y diagn贸stico granular por etapa.
 
 ---
 
-## 🔁 Idempotencia y control de cortes
+## 馃攣 Idempotencia y control de cortes
 
-El pipeline es **idempotente por diseño**: reejecutar el mismo corte produce un resultado idéntico, sin duplicar datos.
+El pipeline es **idempotente por dise帽o**: reejecutar el mismo corte produce un resultado id茅ntico, sin duplicar datos.
 
 - **Bronze** valida la existencia del corte antes de escribir; si ya existe, no reinserta.
-- **Silver** reconstruye cada tabla mediante `overwrite` completo desde el histórico acumulado de Bronze.
-- **Control de ejecución** (`ejecucion_control`) marca una única ejecución como válida por corte, desmarcando las anteriores.
+- **Silver** reconstruye cada tabla mediante `overwrite` completo desde el hist贸rico acumulado de Bronze.
+- **Control de ejecuci贸n** (`ejecucion_control`) marca una 煤nica ejecuci贸n como v谩lida por corte, desmarcando las anteriores.
 
-La tabla `pipeline_control` define el corte de extracción, y `prepare_pipeline_control` valida y publica los parámetros (`fecha_inicio`, `fecha_fin`, `id_ejecucion`) que consumen las etapas posteriores vía **Task Values**.
-
----
-
-## 📁 Organización del repositorio
-
-```
-📦 performance-logistico-dataco
-│
-├── 📄 README.md
-│
-├── 📂 00_metadata/
-│   ├── prepare_pipeline_control          # Corte, id_ejecución, publica parámetros
-│   ├── log_error_prepare_pipeline_control
-│   ├── finalize_pipeline_control         # Marca ejecución válida
-│   └── log_error_finalize_pipeline_control
-│
-├── 📂 01_ingest/
-│   ├── ingest_sharepoint_bronze          # SharePoint → Bronze (Delta)
-│   └── log_error_ingest_sharepoint_bronze
-│
-├── 📂 02_silver/
-│   ├── dimensiones/
-│   │   ├── silver_clientes
-│   │   ├── silver_productos
-│   │   └── silver_ubicaciones
-│   └── hechos/
-│       ├── silver_pedidos
-│       └── silver_pedido_detalle
-│
-└── 📂 03_gold/
-    ├── dimensiones/
-    ├── hechos/
-    └── kpis/                             # Vistas de consumo + alertas
-```
+La tabla `pipeline_control` define el corte de extracci贸n, y `prepare_pipeline_control` valida y publica los par谩metros (`fecha_inicio`, `fecha_fin`, `id_ejecucion`) que consumen las etapas posteriores v铆a **Task Values**.
 
 ---
 
-## ▶️ Cómo ejecutar
+## 馃搧 Organizaci贸n del repositorio
 
-El pipeline se orquesta como un **Databricks Job (Lakeflow)** sobre compute serverless. El orden de ejecución es gestionado por el DAG de tareas:
+```
+馃摝 performance-logistico-dataco
+鈹?鈹溾攢鈹€ 馃搫 README.md
+鈹?鈹溾攢鈹€ 馃搨 00_metadata/
+鈹?  鈹溾攢鈹€ 01_control_pipeline/
+鈹?  鈹?  鈹溾攢鈹€ prepare_pipeline_control       # Corte, id_ejecuci贸n, publica par谩metros
+鈹?  鈹?  鈹斺攢鈹€ finalize_pipeline_control      # Marca ejecuci贸n v谩lida
+鈹?  鈹斺攢鈹€ 02_logs/
+鈹?      鈹溾攢鈹€ log_error_prepare_pipeline_control
+鈹?      鈹斺攢鈹€ log_error_finalize_pipeline_control
+鈹?鈹溾攢鈹€ 馃搨 01_ingest_sharepoint_bronze/
+鈹?  鈹溾攢鈹€ 01_ingest/
+鈹?  鈹?  鈹斺攢鈹€ ingest_sharepoint_bronze       # SharePoint 鈫?Bronze (Delta)
+鈹?  鈹斺攢鈹€ 02_logs/
+鈹?      鈹斺攢鈹€ log_error_ingest_sharepoint_bronze
+鈹?鈹溾攢鈹€ 馃搨 02_silver_dimensiones/
+鈹?  鈹溾攢鈹€ 01_negocio/
+鈹?  鈹?  鈹溾攢鈹€ slv_customer
+鈹?  鈹?  鈹溾攢鈹€ slv_products
+鈹?  鈹?  鈹斺攢鈹€ slv_locations
+鈹?  鈹斺攢鈹€ 02_logs/
+鈹?      鈹溾攢鈹€ log_error_slv_customer
+鈹?      鈹溾攢鈹€ log_error_slv_products
+鈹?      鈹斺攢鈹€ log_error_slv_locations
+鈹?鈹溾攢鈹€ 馃搨 02_silver_hechos/
+鈹?  鈹溾攢鈹€ 01_negocio/
+鈹?  鈹?  鈹溾攢鈹€ slv_orders
+鈹?  鈹?  鈹斺攢鈹€ slv_order_details
+鈹?  鈹斺攢鈹€ 02_logs/
+鈹?      鈹溾攢鈹€ log_error_slv_orders
+鈹?      鈹斺攢鈹€ log_error_slv_order_details
+鈹?鈹斺攢鈹€ 馃搨 03_gold_kpis/
+```
 
-1. **`prepare_pipeline_control`** — valida el corte y publica parámetros.
-2. **`ingest_sharepoint_bronze`** — ingesta cruda a Bronze.
-3. **Capa Silver** — las 5 entidades se procesan en paralelo.
-4. **Capa Gold** — dimensiones, hechos y KPIs.
-5. **`finalize_pipeline_control`** — marca la ejecución como válida.
+---
 
-> Cada tarea de negocio tiene su task de error configurado con la condición *"if at least one failed"*, alimentado con los parámetros dinámicos `run_id`, `error_code` y `result_state` desde el workflow.
+## 鈻讹笍 C贸mo ejecutar
 
-**Parámetros de configuración (Task Parameters):**
+El pipeline se orquesta como un **Databricks Job (Lakeflow)** sobre compute serverless. El orden de ejecuci贸n es gestionado por el DAG de tareas:
 
-| Parámetro | Valor |
+1. **`prepare_pipeline_control`** 鈥?valida el corte y publica par谩metros.
+2. **`ingest_sharepoint_bronze`** 鈥?ingesta cruda a Bronze.
+3. **Capa Silver** 鈥?las 5 entidades se procesan en paralelo.
+4. **Capa Gold** 鈥?dimensiones, hechos y KPIs.
+5. **`finalize_pipeline_control`** 鈥?marca la ejecuci贸n como v谩lida.
+
+> Cada tarea de negocio tiene su task de error configurado con la condici贸n *"if at least one failed"*, alimentado con los par谩metros din谩micos `run_id`, `error_code` y `result_state` desde el workflow.
+
+**Par谩metros de configuraci贸n (Task Parameters):**
+
+| Par谩metro | Valor |
 |:---|:---|
 | `bronze_catalog` / `silver_catalog` | `prod_dataco` |
 | `bronze_schema` | `brz_dataco` |
@@ -349,20 +354,20 @@ El pipeline se orquesta como un **Databricks Job (Lakeflow)** sobre compute serv
 
 ---
 
-## 🛠 Stack técnico
+## 馃洜 Stack t茅cnico
 
 <div align="center">
 
-| Categoría | Tecnología |
+| Categor铆a | Tecnolog铆a |
 |:---|:---|
 | **Plataforma** | Databricks |
 | **Almacenamiento** | Delta Lake |
 | **Gobernanza** | Unity Catalog |
 | **Procesamiento** | PySpark |
-| **Orquestación** | Databricks Workflows / Lakeflow Jobs |
+| **Orquestaci贸n** | Databricks Workflows / Lakeflow Jobs |
 | **Compute** | Serverless |
 | **Origen** | SharePoint (Microsoft Graph API) |
-| **Patrón arquitectónico** | Medallion (Bronze · Silver · Gold) |
+| **Patr贸n arquitect贸nico** | Medallion (Bronze 路 Silver 路 Gold) |
 
 </div>
 
@@ -370,6 +375,6 @@ El pipeline se orquesta como un **Databricks Job (Lakeflow)** sobre compute serv
 
 <div align="center">
 
-**Arquitectura Data Lakehouse · Bronze → Silver → Gold · gobernada, idempotente y trazable de extremo a extremo.**
+**Arquitectura Data Lakehouse 路 Bronze 鈫?Silver 鈫?Gold 路 gobernada, idempotente y trazable de extremo a extremo.**
 
 </div>
