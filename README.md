@@ -1,387 +1,172 @@
 <div align="center">
 
-# 🚚 Performance Logístico & Riesgo de Entrega
-### Pipeline ELT · Arquitectura Data Lakehouse · Databricks
+# 🏗️ DataCo Supply Chain · Data Lakehouse
 
-*Automatización end-to-end del reporte semanal de performance logístico y riesgo de entrega por región, migrando un proceso manual en Excel a un pipeline gobernado, idempotente y trazable sobre Unity Catalog.*
+### De un ETL on-premise con SSIS + Data Warehouse a un pipeline **ELT cloud end-to-end** sobre Databricks Lakehouse
+
+De SharePoint al correo del área de negocio: ingesta, modelo dimensional con historial, observabilidad y un reporte ejecutivo que se envía solo.
 
 <br>
 
 ![Databricks](https://img.shields.io/badge/Databricks-FF3621?style=for-the-badge&logo=databricks&logoColor=white)
-![Delta Lake](https://img.shields.io/badge/Delta_Lake-00ADD8?style=for-the-badge&logo=delta&logoColor=white)
+![Delta Lake](https://img.shields.io/badge/Delta_Lake-00ADD4?style=for-the-badge&logo=delta&logoColor=white)
 ![PySpark](https://img.shields.io/badge/PySpark-E25A1C?style=for-the-badge&logo=apachespark&logoColor=white)
-![Unity Catalog](https://img.shields.io/badge/Unity_Catalog-1B3139?style=for-the-badge&logo=databricks&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-
-![Architecture](https://img.shields.io/badge/architecture-Medallion-blue?style=flat-square)
-![Orchestration](https://img.shields.io/badge/orchestration-Lakeflow_Jobs-orange?style=flat-square)
-![Compute](https://img.shields.io/badge/compute-Serverless-green?style=flat-square)
-![Status](https://img.shields.io/badge/status-Producción-success?style=flat-square)
+![Unity Catalog](https://img.shields.io/badge/Unity_Catalog-FF3621?style=for-the-badge&logo=databricks&logoColor=white)
+![Microsoft Graph](https://img.shields.io/badge/Microsoft_Graph-0078D4?style=for-the-badge&logo=microsoft&logoColor=white)
+![Slack](https://img.shields.io/badge/Alertas-Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)
 
 </div>
 
 ---
 
-## 📌 Tabla de contenidos
+## 🎯 En una línea
 
-- [Contexto del negocio](#-contexto-del-negocio)
-- [Arquitectura de la solución](#-arquitectura-de-la-solución)
-- [Tubería de datos de extremo a extremo](#-tubería-de-datos-de-extremo-a-extremo)
-- [Las capas del Lakehouse](#-las-capas-del-lakehouse)
-- [Modelo dimensional (Gold)](#-modelo-dimensional-gold)
-- [Indicadores de negocio](#-indicadores-de-negocio)
-- [Trazabilidad y manejo de errores](#-trazabilidad-y-manejo-de-errores)
-- [Idempotencia y control de cortes](#-idempotencia-y-control-de-cortes)
-- [Organización del repositorio](#-organización-del-repositorio)
-- [Cómo ejecutar](#-cómo-ejecutar)
-- [Stack técnico](#-stack-técnico)
+Tomé un reporte logístico que se armaba a mano cada semana cruzando exports en Excel (2–3 horas de un analista) y lo convertí en un **pipeline automático de punta a punta** sobre Databricks Lakehouse: toma los datos de SharePoint, los procesa en capas, calcula 7 indicadores de negocio y envía un Excel ejecutivo por correo, con trazabilidad y alertas en cada paso.
+
+## ⭐ Lo que resuelve
+
+- **Antes:** proceso manual, lento y con cifras distintas entre áreas según el corte.
+- **Ahora:** una sola corrida reproducible, con reglas de negocio centralizadas, historial de cambios y entrega automática al área.
 
 ---
 
-## 🎯 Contexto del negocio
-
-El área de Operaciones construía **manualmente en Excel** un reporte semanal de performance logístico, cruzando exports del ERP en un proceso que consumía **2–3 horas por analista** cada semana y generaba **cifras inconsistentes** entre áreas por trabajar con cortes distintos del mismo dato.
-
-Este proyecto reemplaza ese proceso con un **pipeline ELT automatizado** que consolida la información con periodicidad semanal, permitiendo a Supply Chain y a las gerencias regionales tomar decisiones oportunas sobre priorización de envíos, selección de modos de transporte y gestión de reclamos por entregas tardías.
-
-| Antes | Después |
-|:---|:---|
-| 2–3 horas semanales de trabajo manual | Ejecución automatizada y orquestada |
-| Cifras distintas entre áreas | Una única fuente de verdad gobernada |
-| Reacción a alertas en 48–72 h | Detección en la misma ejecución |
-| Riesgo de error por copy/paste | Proceso idempotente y reproducible |
-
----
-
-## 🏛 Arquitectura de la solución
-
-La solución implementa una **arquitectura Data Lakehouse** con el patrón **Medallion (Bronze → Silver → Gold)** sobre **Databricks**, gobernada de extremo a extremo por **Unity Catalog** y ejecutada sobre **compute serverless**.
-
-Toda la plataforma vive bajo un único catálogo de gobierno, `prod_dataco`, organizado por esquemas que representan cada capa y el dominio de control:
+## 🧭 Pipeline de un vistazo
 
 ```
-prod_dataco
-├── brz_dataco     → Capa Bronze  (ingesta cruda en Delta)
-├── slv_dataco     → Capa Silver  (limpieza, tipificación, normalización)
-├── gld_dataco     → Capa Gold    (modelo dimensional + KPIs de negocio)
-└── metadata       → Control del pipeline (etl_log, pipeline_control, ejecucion_control)
+SharePoint ──▶ 🥉 Bronze ──▶ 🥈 Silver ──▶ 🥇 Gold ──▶ 📊 Excel + 📧 Correo
+             (ingesta       (tipado,       (modelo       (reporte ejecutivo
+              por corte)     dedupe)        estrella +     automático)
+                                            KPIs)
+                    └──── 📋 etl_log + 🚨 alertas Slack en cada task ────┘
 ```
 
-> **Principio rector:** los datos se enriquecen y ganan valor de negocio conforme ascienden de capa, mientras que la gobernanza, la trazabilidad y la calidad se aplican de forma consistente en todo el recorrido.
+| | |
+|---|---|
+| **Fuente** | Archivo en SharePoint Online, descargado vía Microsoft Graph |
+| **Procesamiento** | PySpark + Spark SQL sobre Delta Lake |
+| **Arquitectura** | Medallion: Bronze → Silver → Gold |
+| **Orquestación** | Databricks Workflow (20 tasks, compute Serverless) |
+| **Modelo** | Esquema estrella con **SCD2** en dimensiones y hechos clave |
+| **Observabilidad** | Tabla `etl_log` + alerta a Slack ante cualquier fallo |
+| **Entrega** | Excel de 4 pestañas enviado por correo (Microsoft Graph) |
 
 ---
 
-## 🔀 Tubería de datos de extremo a extremo
+## 🔧 Qué hace cada capa
 
-El dato fluye de arriba hacia abajo, ganando estructura y valor de negocio en cada capa — desde el archivo crudo en SharePoint hasta el reporte que llega al buzón del equipo de negocio.
+### 🥉 Bronze — ingesta cruda
+Descarga el archivo desde SharePoint y carga **solo el corte de fechas** definido en una tabla de control. Cada corte se agrega sin tocar los anteriores y el proceso es idempotente: volver a correrlo no duplica datos.
 
-```mermaid
-flowchart TB
-    SP[("📥 &nbsp;SharePoint<br/><b>DataCo CSV</b>")]
+### 🥈 Silver — datos limpios y conformados
+Tipado fuerte, normalización y deduplicación por llave de negocio. Separa el archivo de origen en entidades: clientes, productos, ubicaciones, pedidos y detalle de pedido.
 
-    PREP["⚙️ &nbsp;<b>prepare_pipeline_control</b><br/><i>valida corte · genera id_ejecución</i>"]
+### 🥇 Gold — modelo dimensional y KPIs
+Esquema estrella listo para análisis:
+- **5 dimensiones** (clientes y productos con historial SCD2; ubicaciones, fecha y modo de envío).
+- **2 tablas de hechos** (pedidos con SCD2 y reglas de negocio; detalle de pedido).
+- **Resumen por pedido** como base única de los indicadores.
+- **4 vistas de KPIs:** Resumen Ejecutivo, Detalle por Región, Detalle por Orden (SCD2) y Alertas.
 
-    subgraph BRZ["🥉 &nbsp;BRONZE &nbsp;·&nbsp; ingesta cruda gobernada"]
-        direction TB
-        ING["<b>ingest_sharepoint_bronze</b><br/><i>Delta crudo + trazabilidad</i>"]
-    end
-
-    subgraph SLV["🥈 &nbsp;SILVER &nbsp;·&nbsp; limpieza · tipificación · normalización"]
-        direction LR
-        C["👤<br/>Clientes"]
-        P["📦<br/>Productos"]
-        U["🌎<br/>Ubicaciones"]
-        PED["🧾<br/>Pedidos"]
-        DET["📋<br/>Detalle"]
-    end
-
-    subgraph GLD["🥇 &nbsp;GOLD &nbsp;·&nbsp; modelo dimensional + KPIs"]
-        direction TB
-        DIM["⭐ &nbsp;<b>Dimensiones</b><br/><i>cliente · producto · ubicación · fecha</i>"]
-        FACT["📊 &nbsp;<b>Hechos</b><br/><i>pedidos · detalle</i>"]
-        KPI["🎯 &nbsp;<b>7 KPIs & Vistas</b><br/><i>resumen · región · orden · alertas</i>"]
-        DIM --> KPI
-        FACT --> KPI
-    end
-
-    XLS["📗 &nbsp;<b>Reporte Excel</b><br/><i>4 pestañas + formato condicional</i>"]
-    MAIL["📧 &nbsp;<b>Envío automático</b><br/><i>lunes · antes de las 8:00 am</i>"]
-    FIN["✅ &nbsp;<b>finalize_pipeline_control</b><br/><i>marca ejecución válida</i>"]
-
-    SP --> PREP --> ING
-    ING --> C & P & U & PED & DET
-    C & P & U & PED & DET --> DIM & FACT
-    KPI --> XLS --> MAIL --> FIN
-
-    classDef src fill:#0B2027,stroke:#00ADD8,stroke-width:2px,color:#fff
-    classDef ctrl fill:#3A2E00,stroke:#FFB020,stroke-width:2px,color:#fff
-    classDef bronze fill:#4E342E,stroke:#CD7F32,stroke-width:2px,color:#fff
-    classDef silver fill:#37474F,stroke:#B0BEC5,stroke-width:2px,color:#fff
-    classDef gold fill:#4E3B00,stroke:#FFD700,stroke-width:2px,color:#fff
-    classDef output fill:#1B4332,stroke:#40916C,stroke-width:2px,color:#fff
-
-    class SP src
-    class PREP,FIN ctrl
-    class ING bronze
-    class C,P,U,PED,DET silver
-    class DIM,FACT,KPI gold
-    class XLS,MAIL output
-```
-
-<div align="center">
-
-`SharePoint` → `Control` → 🥉 `Bronze` → 🥈 `Silver` → 🥇 `Gold` → 📗 `Excel` → 📧 `Correo`
-
-</div>
-
-Tras el cálculo de los KPIs, la capa Gold materializa un **reporte Excel de 4 pestañas** (Resumen Ejecutivo, Detalle Región, Detalle Orden y Alertas) con formato condicional, que se **distribuye automáticamente por correo** al grupo de negocio cada lunes antes de las 8:00 am.
-
-Cada tarea del pipeline está acompañada de un **task dedicado de manejo de errores** que se dispara únicamente ante una falla, garantizando visibilidad granular por etapa (ver [Trazabilidad y manejo de errores](#-trazabilidad-y-manejo-de-errores)).
+### 📊 Entrega a negocio
+Un notebook genera el **Excel de 4 pestañas** con formato condicional tipo semáforo y lo **envía por correo** con una tabla resumen y un gráfico en el cuerpo del mensaje.
 
 ---
 
-## 🧱 Las capas del Lakehouse
+## 📐 Los 7 indicadores
 
-### 🥉 Bronze — Ingesta cruda gobernada
+On-Time Delivery % · Late Delivery Risk % · Shipping Variance · Profit Margin % · Revenue por Cliente · Beneficio por Orden · Lead Time Promedio
 
-Extrae el dataset desde SharePoint (vía Microsoft Graph) correspondiente al corte validado, y lo persiste en **Delta** sin transformar, conservando la trazabilidad completa de la ejecución y del archivo de origen.
-
-- Formato **Delta** desde el primer aterrizaje del dato.
-- Metadatos de trazabilidad embebidos: `fecha_inicio_corte`, `fecha_fin_corte`, `fecha_carga`, `id_ejecucion`, `origen`, `archivo_origen`.
-- **Control de duplicidad de corte:** si el corte ya existe, no se reinsertan registros.
-
-### 🥈 Silver — Limpieza, tipificación y normalización
-
-Descompone el dataset ancho de 53 columnas en **entidades independientes por dominio**, aplicando limpieza (`trim` + mayúsculas), tipificación de fechas y montos, y deduplicación por llave natural.
-
-| Entidad | Grano | Estrategia de deduplicación |
-|:---|:---|:---|
-| **Clientes** | 1 registro por cliente | Una fila por cliente |
-| **Productos** | 1 registro por producto | Una fila por producto |
-| **Ubicaciones** | Combinación única de 6 columnas geográficas | Corte más reciente |
-| **Pedidos** | 1 registro por pedido | Corte más reciente |
-| **Detalle de Pedido** | 1 registro por línea de pedido | Corte más reciente |
-
-> Silver mantiene la granularidad completa **sin agregaciones**. Los filtros de negocio específicos por indicador se aplican en Gold.
-
-### 🥇 Gold — Modelo dimensional y KPIs de negocio
-
-Consolida las entidades de Silver en un **modelo dimensional tipo estrella** y calcula los indicadores de negocio, materializando las vistas de consumo final.
-
-**Vistas de salida:**
-
-| Vista | Grano | Uso |
-|:---|:---|:---|
-| **Resumen Ejecutivo** | Por mercado (market) | KPIs totalizados + variación semanal |
-| **Detalle Región** | Región + modo de envío | Los 7 indicadores desglosados |
-| **Detalle Orden** | Máximo detalle | Análisis puntual y reclamos |
-| **Alertas** | Órdenes de riesgo crítico | Riesgo tardío en regiones bajo umbral |
+Con agrupaciones de negocio **GLOBAL** (todos los mercados) y **AMERICAS** (LATAM + USCA), y reglas de alcance: se excluyen los pedidos cancelados y se marcan los sospechosos de fraude.
 
 ---
 
-## ⭐ Modelo dimensional (Gold)
+## 🛡️ Confiabilidad y trazabilidad
 
-```mermaid
-erDiagram
-    FACT_PEDIDOS }o--|| DIM_CLIENTE : "cliente"
-    FACT_PEDIDOS }o--|| DIM_UBICACION : "región/mercado"
-    FACT_PEDIDOS }o--|| DIM_FECHA : "fecha de pedido"
-    FACT_PEDIDOS ||--o{ FACT_DETALLE : "líneas"
-    FACT_DETALLE }o--|| DIM_PRODUCTO : "producto"
-
-    DIM_CLIENTE {
-        int cliente_key PK
-        string segmento
-    }
-    DIM_PRODUCTO {
-        int producto_key PK
-        string categoria
-        decimal precio
-    }
-    DIM_UBICACION {
-        int ubicacion_key PK
-        string market
-        string region
-        string pais
-    }
-    DIM_FECHA {
-        int fecha_key PK
-        date fecha
-        int semana
-    }
-    FACT_PEDIDOS {
-        int pedido_id PK
-        int on_time_flag
-        int late_delivery_risk
-        int shipping_variance
-    }
-    FACT_DETALLE {
-        int detalle_id PK
-        decimal sales
-        decimal profit
-    }
-```
+- **Tabla `etl_log`:** cada notebook registra inicio, fin, filas procesadas y estado (`EN_PROCESO → EXITOSO / ERROR`), con un identificador único por ejecución del Workflow.
+- **Manejo de errores:** cada task de negocio tiene su task de log que, ante un fallo, registra el detalle técnico de la excepción y **avisa a Slack**.
+- **Control de corte:** una tabla de parámetros define la ventana a procesar; el reproceso del mismo corte es idempotente.
 
 ---
 
-## 📊 Indicadores de negocio
+## 🗂️ Modelo dimensional
 
-Los **7 indicadores** replicados desde el proceso manual, con tolerancia de diferencia ≤ 0.5% por redondeos:
+```
+        dim_customers        dim_products
+              │                    │
+              ▼                    ▼
+  dim_fecha ─▶ fact_orders ◀─ fact_order_details ◀─ dim_products
+              ▲       ▲
+        dim_locations  dim_shipping_mode
+```
 
-| # | Indicador | Granularidad |
-|:---:|:---|:---|
-| 1 | **On-Time Delivery %** | Región + modo de envío |
-| 2 | **Late Delivery Risk %** | Región (con validación cruzada) |
-| 3 | **Shipping Variance** | Promedio por región |
-| 4 | **Profit Margin %** | Orden (resalta pérdidas) |
-| 5 | **Revenue por Cliente** | Segmento de cliente |
-| 6 | **Beneficio por Orden** | Orden |
-| 7 | **Lead Time Promedio** | Modo de envío |
-
-**Reglas de negocio aplicadas en Gold:**
-
-- Agrupaciones regionales: `GLOBAL = LATAM + Europe + USCA + Pacific Asia + Africa` · `AMERICAS = LATAM + USCA`
-- Se excluyen las órdenes canceladas del cálculo.
-- Las órdenes sospechosas de fraude se incluyen pero se marcan.
-- Los envíos cancelados se muestran en el detalle pero no entran a On-Time Delivery ni Lead Time.
+Las dimensiones de clientes y productos y la tabla de hechos de pedidos usan **SCD2**: conservan el historial, de modo que cada pedido puede analizarse con los atributos vigentes en su momento.
 
 ---
 
-## 🔎 Trazabilidad y manejo de errores
+## 🛠️ Stack
 
-Cada etapa del pipeline registra su ciclo de vida en la tabla de control `metadata.etl_log`, siguiendo el flujo de estados:
-
-```
-EN_PROCESO  ──▶  EXITOSO
-     │
-     └────────▶  ERROR   (capturado por el task de error dedicado)
-```
-
-**Patrón de manejo de errores por etapa:** cada tarea del pipeline (control, ingesta y las 5 tablas Silver) tiene un **task de log de error asociado** que se ejecuta únicamente si la tarea principal falla. Este task:
-
-1. Recupera el `log_id` de la ejecución fallida vía Task Values.
-2. Consulta el detalle técnico de la excepción mediante la **Databricks Jobs API** (`runs/get-output`), usando *dynamic value references* (`run_id`, `error_code`, `result_state`).
-3. Actualiza el registro en `etl_log` con estado `ERROR`, la marca de tiempo de finalización y la traza técnica del error.
-4. Envía una **alerta en tiempo real a Slack** vía Incoming Webhook, con el detalle del task, el `run_id` y el `log_id` — sin exponer la URL del webhook en el código (se lee de un secret scope de Databricks). *Implementado en los 5 notebooks de error de Silver; pendiente de replicar en los 3 de control (`prepare`/`ingest`/`finalize`).*
-
-```mermaid
-flowchart LR
-    T["Task de negocio"] -->|éxito| OK["etl_log: EXITOSO"]
-    T -->|falla| ERR["Task de log de error"]
-    ERR --> API["Jobs API<br/>runs/get-output"]
-    API --> LOG["etl_log: ERROR<br/><i>+ traza técnica</i>"]
-    LOG --> SLACK["🔔 Alerta a Slack<br/><i>Incoming Webhook</i>"]
-
-    classDef ok fill:#1B4332,stroke:#40916C,color:#fff
-    classDef err fill:#4A1010,stroke:#E63946,color:#fff
-    class OK ok
-    class ERR,API,LOG,SLACK err
-```
-
-Cada `id_ejecucion` identifica una corrida completa del workflow, mientras que cada `log_id` identifica la ejecución específica de un notebook — permitiendo trazabilidad **de extremo a extremo** y diagnóstico granular por etapa.
-
----
-
-## 🔁 Idempotencia y control de cortes
-
-El pipeline es **idempotente por diseño**: reejecutar el mismo corte produce un resultado idéntico, sin duplicar datos.
-
-- **Bronze** valida la existencia del corte antes de escribir; si ya existe, no reinserta.
-- **Silver** reconstruye cada tabla mediante `overwrite` completo desde el histórico acumulado de Bronze.
-- **Control de ejecución** (`ejecucion_control`) marca una única ejecución como válida por corte, desmarcando las anteriores.
-
-La tabla `pipeline_control` define el corte de extracción, y `prepare_pipeline_control` valida y publica los parámetros (`fecha_inicio`, `fecha_fin`, `id_ejecucion`) que consumen las etapas posteriores vía **Task Values**.
+| Área | Tecnología |
+|---|---|
+| Plataforma | Databricks (Free Edition) · Serverless |
+| Procesamiento | PySpark · Spark SQL |
+| Almacenamiento | Delta Lake |
+| Catálogo | Unity Catalog |
+| Ingesta y correo | Microsoft Graph API |
+| Secretos | Databricks Secret Scopes |
+| Alertas | Webhook de Slack |
+| Reportería | openpyxl · matplotlib |
 
 ---
 
 ## 📁 Organización del repositorio
 
 ```
-📦 performance-logistico-dataco
-│
-├── 📄 README.md
-│
-├── 📂 00_metadata/
-│   ├── 01_control_pipeline/
-│   │   ├── prepare_pipeline_control       # Corte, id_ejecución, publica parámetros
-│   │   └── finalize_pipeline_control      # Marca ejecución válida
-│   └── 02_logs/
-│       ├── log_error_prepare_pipeline_control
-│       └── log_error_finalize_pipeline_control
-│
-├── 📂 01_ingest_sharepoint_bronze/
-│   ├── 01_ingest/
-│   │   └── ingest_sharepoint_bronze       # SharePoint → Bronze (Delta)
-│   └── 02_logs/
-│       └── log_error_ingest_sharepoint_bronze
-│
-├── 📂 02_silver_dimensiones/
-│   ├── 01_negocio/
-│   │   ├── slv_customer
-│   │   ├── slv_products
-│   │   └── slv_locations
-│   └── 02_logs/
-│       ├── log_error_slv_customer
-│       ├── log_error_slv_products
-│       └── log_error_slv_locations
-│
-├── 📂 02_silver_hechos/
-│   ├── 01_negocio/
-│   │   ├── slv_orders
-│   │   └── slv_order_details
-│   └── 02_logs/
-│       ├── log_error_slv_orders
-│       └── log_error_slv_order_details
-│
-└── 📂 03_gold_kpis/
+00_metadata/                  # control del pipeline (prepare / finalize) + logs
+01_ingest_sharepoint_bronze/  # ingesta a Bronze + logs
+02_silver_dimensiones/        # clientes, productos, ubicaciones + logs
+02_silver_hechos/             # pedidos, detalle de pedido + logs
+03_gold_dimensiones/          # 5 dimensiones + logs
+03_gold_hechos/               # pedidos, detalle de pedido + logs
+03_gold_kpis/                 # resumen por pedido, 4 KPIs, reporte + logs
+```
+
+Cada carpeta separa el notebook de negocio (`01_negocio/`) de su notebook de manejo de errores (`02_logs/`).
+
+---
+
+## 🔄 Workflow
+
+Orquestado como un único Databricks Workflow de 20 tasks de negocio, cada una con su task de log de error. El grafo final corre en **abanico**: las capas que no dependen entre sí se ejecutan en paralelo.
+
+```
+prepare ─▶ ingest ─▶ ┌ 5 Silver ┐ ─▶ ┌ 7 Gold dim/hechos ┐ ─▶ order_summary ─▶ ┌ 4 KPIs ┐ ─▶ reporte ─▶ finalize
 ```
 
 ---
 
-## ▶️ Cómo ejecutar
+## 🧩 Contexto del proyecto
 
-El pipeline se orquesta como un **Databricks Job (Lakeflow)** sobre compute serverless. El orden de ejecución es gestionado por el DAG de tareas:
-
-1. **`prepare_pipeline_control`** — valida el corte y publica parámetros.
-2. **`ingest_sharepoint_bronze`** — ingesta cruda a Bronze.
-3. **Capa Silver** — las 5 entidades se procesan en paralelo.
-4. **Capa Gold** — dimensiones, hechos y KPIs.
-5. **`finalize_pipeline_control`** — marca la ejecución como válida.
-
-> Cada tarea de negocio tiene su task de error configurado con la condición *"if at least one failed"*, alimentado con los parámetros dinámicos `run_id`, `error_code` y `result_state` desde el workflow.
-
-**Parámetros de configuración (Task Parameters):**
-
-| Parámetro | Valor |
-|:---|:---|
-| `bronze_catalog` / `silver_catalog` | `prod_dataco` |
-| `bronze_schema` | `brz_dataco` |
-| `silver_schema` | `slv_dataco` |
-| `bronze_table` | `raw_dataco_supply_chain` |
+Proyecto de portafolio que **migra un proceso tradicional** (SQL Server Integration Services sobre Data Warehouse on-premise) a una **arquitectura Lakehouse en la nube**, conservando las reglas de negocio del reporte original. El dataset es público (*DataCo Smart Supply Chain*, Kaggle) y la infraestructura es real.
 
 ---
 
-## 🛠 Stack técnico
+## 🗺️ Roadmap
 
-<div align="center">
+Próximas mejoras de nivel productivo:
 
-| Categoría | Tecnología |
-|:---|:---|
-| **Plataforma** | Databricks |
-| **Almacenamiento** | Delta Lake |
-| **Gobernanza** | Unity Catalog |
-| **Procesamiento** | PySpark |
-| **Orquestación** | Databricks Workflows / Lakeflow Jobs |
-| **Compute** | Serverless |
-| **Origen** | SharePoint (Microsoft Graph API) |
-| **Patrón arquitectónico** | Medallion (Bronze · Silver · Gold) |
-
-</div>
+- [ ] Gobierno de datos: etiquetas de propiedad, enmascaramiento de datos sensibles y filtros por fila en Unity Catalog.
+- [ ] Calidad de datos declarativa: tablas de reglas y de resultados, con constraints a nivel Delta.
+- [ ] Dashboard de salud del pipeline sobre `etl_log`.
+- [ ] Infraestructura como código con Databricks Asset Bundles y CI con GitHub Actions.
+- [ ] Ingesta incremental con Auto Loader cuando la fuente pase a un almacenamiento de objetos.
+- [ ] Capa de ML: usar la capa Gold como insumo de un modelo predictivo (retrasos de envío).
 
 ---
 
 <div align="center">
 
-**Arquitectura Data Lakehouse · Bronze → Silver → Gold · gobernada, idempotente y trazable de extremo a extremo.**
+**Josuhe Sosa Lara** · Data Engineer · Lima, Perú
+
+*Dataset público · infraestructura real · construido de punta a punta sobre Databricks Lakehouse.*
 
 </div>
