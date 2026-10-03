@@ -2,7 +2,7 @@
 
 # 🏗️ DataCo Supply Chain · Data Lakehouse
 
-### De un ETL on-premise con SSIS + Data Warehouse a un pipeline **ELT cloud end-to-end** sobre Databricks Lakehouse
+### Plataforma de datos **ELT end-to-end** sobre Databricks Lakehouse — de SSIS on-premise a un Lakehouse cloud gobernado, con observabilidad, calidad y Machine Learning
 
 De SharePoint al correo del área de negocio: ingesta, modelo dimensional con historial, observabilidad y un reporte ejecutivo que se envía solo.
 
@@ -150,16 +150,27 @@ Proyecto de portafolio que **migra un proceso tradicional** (SQL Server Integrat
 
 ---
 
-## 🗺️ Roadmap
+## 🚀 Capacidades de nivel productivo
 
-Próximas mejoras de nivel productivo:
+Más allá del pipeline base, el proyecto incorpora una capa completa de gobierno, calidad, automatización y analítica avanzada:
 
-- [ ] Gobierno de datos: etiquetas de propiedad, enmascaramiento de datos sensibles y filtros por fila en Unity Catalog.
-- [ ] Calidad de datos declarativa: tablas de reglas y de resultados, con constraints a nivel Delta.
-- [ ] Dashboard de salud del pipeline sobre `etl_log`.
-- [ ] Infraestructura como código con Databricks Asset Bundles y CI con GitHub Actions.
-- [ ] Ingesta incremental con Auto Loader cuando la fuente pase a un almacenamiento de objetos.
-- [ ] Capa de ML: usar la capa Gold como insumo de un modelo predictivo (retrasos de envío).
+### 🛡️ Gobierno de datos (Unity Catalog)
+Etiquetas de propiedad por tabla, enmascaramiento dinámico de datos sensibles (como el correo del cliente) y filtros a nivel de fila según el grupo del usuario, todo gestionado en Unity Catalog.
+
+### ✅ Calidad de datos declarativa
+Motor de calidad basado en una tabla de reglas y una tabla de resultados: cada corrida valida las reglas aplicables y persiste el resultado, con constraints a nivel Delta que protegen la integridad de las tablas.
+
+### 📈 Dashboard de salud del pipeline
+Tablero de Databricks SQL sobre `etl_log` con la tasa de éxito por día, la duración promedio por task, la volumetría por capa y los últimos errores.
+
+### ⚙️ Infraestructura como código y CI/CD
+Todo el entorno descrito con Databricks Asset Bundles y desplegado con GitHub Actions (lint, validación y despliegue), con separación de ambientes dev y prod.
+
+### 🔄 Ingesta incremental
+Ingesta con Auto Loader para el procesamiento incremental de archivos a medida que llegan al almacenamiento de objetos.
+
+### 🤖 Capa de Machine Learning
+La capa Gold alimenta un modelo predictivo que anticipa el riesgo de retraso en los envíos, integrando el Lakehouse con el ciclo de MLOps.
 
 ---
 
