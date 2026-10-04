@@ -103,6 +103,20 @@ Las dimensiones de clientes y productos y la tabla de hechos de pedidos usan **S
 
 ---
 
+## 🔄 Workflow productivo
+
+Pipeline orquestado como un único Databricks Workflow en **abanico**: las capas sin dependencia entre sí corren en paralelo. Son **20 tasks de negocio**, y cada una tiene su task `log_error` que, ante un fallo, registra la excepción en `etl_log` y **notifica a Slack**.
+
+![Workflow DataCo en abanico](docs/workflow.png)
+
+```
+prepare ─▶ ingest ─▶ ┌ 5 Silver ┐ ─▶ ┌ 7 Gold dim/hechos ┐ ─▶ order_summary ─▶ ┌ 4 KPIs ┐ ─▶ reporte ─▶ finalize
+```
+
+De la ingesta en SharePoint al envío del Excel por correo, con trazabilidad de punta a punta en `etl_log`.
+
+---
+
 ## 🛠️ Stack
 
 | Área | Tecnología |
