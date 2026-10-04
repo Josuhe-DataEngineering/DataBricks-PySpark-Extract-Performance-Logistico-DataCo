@@ -145,7 +145,7 @@ Cada task de negocio (azul/dorado/violeta) tiene colgando su task `log_error` (l
 
 | Área | Tecnología |
 |---|---|
-| Plataforma | Databricks (Free Edition) · Serverless |
+| Plataforma | Databricks  · Serverless |
 | Procesamiento | PySpark · Spark SQL |
 | Almacenamiento | Delta Lake |
 | Catálogo | Unity Catalog |
