@@ -184,7 +184,7 @@ prepare ─▶ ingest ─▶ ┌ 5 Silver ┐ ─▶ ┌ 7 Gold dim/hechos ┐ �
 
 ## 🧩 Contexto del proyecto
 
-Proyecto de portafolio que **migra un proceso tradicional** (SQL Server Integration Services sobre Data Warehouse on-premise) a una **arquitectura Lakehouse en la nube**, conservando las reglas de negocio del reporte original. El dataset es público (*DataCo Smart Supply Chain*, Kaggle) y la infraestructura es real.
+Proyecto que **migra un proceso tradicional** (SQL Server Integration Services sobre Data Warehouse on-premise) a una **arquitectura Lakehouse en la nube**, conservando las reglas de negocio del reporte original. El dataset es público (*DataCo Smart Supply Chain*, Kaggle) y la infraestructura es real.
 
 ---
 
