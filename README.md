@@ -214,7 +214,7 @@ La capa Gold alimenta un modelo predictivo que anticipa el riesgo de retraso en 
 
 <div align="center">
 
-**Josuhe Sosa Lara** · Data Engineer · Lima, Perú
+**Josuhe Sosa Lara** · Data Engineering · Lima, Perú
 
 *Dataset público · infraestructura real · construido de punta a punta sobre Databricks Lakehouse.*
 
