@@ -103,17 +103,41 @@ Las dimensiones de clientes y productos y la tabla de hechos de pedidos usan **S
 
 ---
 
-## 🔄 Workflow productivo
+## 🔄 Tubería de datos de punta a punta
 
-Pipeline orquestado como un único Databricks Workflow en **abanico**: las capas sin dependencia entre sí corren en paralelo. Son **20 tasks de negocio**, y cada una tiene su task `log_error` que, ante un fallo, registra la excepción en `etl_log` y **notifica a Slack**.
+Pipeline orquestado como un único **Databricks Workflow en abanico**: las capas sin dependencia entre sí se ejecutan en paralelo. Son **20 tasks de negocio**, y **cada una tiene su task `log_error`** que, ante un fallo, registra la excepción en `etl_log` y notifica a **Slack**. Así se ve la tubería completa, de la ingesta en SharePoint hasta el envío del Excel por correo:
 
-![Workflow DataCo en abanico](docs/workflow.png)
+<p align="center">
+  <img src="docs/workflow.png" alt="Tubería de datos DataCo en abanico: cada task de negocio con su task log_error, de la ingesta al envío del correo" width="100%">
+</p>
+
+**Recorrido de una ejecución**
 
 ```
-prepare ─▶ ingest ─▶ ┌ 5 Silver ┐ ─▶ ┌ 7 Gold dim/hechos ┐ ─▶ order_summary ─▶ ┌ 4 KPIs ┐ ─▶ reporte ─▶ finalize
+prepare_pipeline_control
+      │
+      ▼
+ingest_sharepoint_bronze                      (SharePoint → Bronze, por corte)
+      │
+      ├─▶ slv_customer · slv_products · slv_locations · slv_orders · slv_order_details
+      │
+      ├─▶ gld_customers · gld_products · gld_locations · gld_fecha · gld_shipping_mode
+      │        gld_orders · gld_order_details
+      │
+      ▼
+gld_order_summary                             (base única de los KPIs)
+      │
+      ├─▶ gld_kpi_executive_summary · gld_kpi_region_detail
+      │        gld_kpi_order_details · gld_kpi_alerts
+      │
+      ▼
+gld_reporte_excel_correo                      (Excel de 4 pestañas + correo vía Graph)
+      │
+      ▼
+finalize_pipeline_control                     (cierre de la ejecución)
 ```
 
-De la ingesta en SharePoint al envío del Excel por correo, con trazabilidad de punta a punta en `etl_log`.
+Cada task de negocio (azul/dorado/violeta) tiene colgando su task `log_error` (línea punteada roja): se dispara solo si la task falla, deja el detalle técnico en `etl_log` y envía la alerta a Slack. La trazabilidad es de punta a punta, task por task.
 
 ---
 
