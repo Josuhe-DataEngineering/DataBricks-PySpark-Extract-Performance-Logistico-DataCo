@@ -192,10 +192,10 @@ Proyecto que **migra un proceso tradicional** (SQL Server Integration Services s
 
 Más allá del pipeline base, el proyecto suma una capa de gobierno, calidad, automatización y analítica avanzada. Estado: ✅ implementado · 🚧 en construcción.
 
-### 🛡️ Gobierno de datos (Unity Catalog) · 🚧 en construcción
+### 🛡️ Gobierno de datos (Unity Catalog) · ✅ implementado
 Etiquetas de propiedad por tabla, enmascaramiento dinámico de datos sensibles (como el correo del cliente) y filtros a nivel de fila según el grupo del usuario, todo gestionado en Unity Catalog.
 
-### ✅ Calidad de datos declarativa · 🚧 en construcción
+### ✅ Calidad de datos declarativa · ✅ implementado
 Motor de calidad basado en una tabla de reglas y una tabla de resultados: cada corrida valida las reglas aplicables y persiste el resultado, con constraints a nivel Delta que protegen la integridad de las tablas.
 
 ### 📈 Dashboard de salud del pipeline · ✅ implementado
@@ -205,13 +205,13 @@ Dashboard AI/BI "Salud del pipeline DataCo", construido sobre las vistas de salu
   <img src="docs/dashboard_salud_pipeline.png" alt="Dashboard de salud del pipeline DataCo" width="100%">
 </p>
 
-### ⚙️ Infraestructura como código y CI/CD · 🚧 en construcción
+### ⚙️ Infraestructura como código y CI/CD · ✅ implementado
 Todo el entorno descrito con Databricks Asset Bundles y desplegado con GitHub Actions (lint, validación y despliegue), con separación de ambientes dev y prod.
 
-### 🔄 Ingesta incremental · 🚧 en construcción
+### 🔄 Ingesta incremental · ✅ implementado
 Ingesta con Auto Loader para el procesamiento incremental de archivos a medida que llegan al almacenamiento de objetos.
 
-### 🤖 Capa de Machine Learning · 🚧 en construcción
+### 🤖 Capa de Machine Learning · ✅ implementado
 La capa Gold alimenta un modelo predictivo que anticipa el riesgo de retraso en los envíos, integrando el Lakehouse con el ciclo de MLOps.
 
 ---
