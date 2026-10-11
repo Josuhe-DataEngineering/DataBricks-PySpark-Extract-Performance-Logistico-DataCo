@@ -202,7 +202,7 @@ Motor de calidad basado en una tabla de reglas y una tabla de resultados: cada c
 Dashboard AI/BI "Salud del pipeline DataCo", construido sobre las vistas de salud del esquema de control (última ejecución, histórico y errores). Muestra el estado de la última ejecución, la duración por notebook, la tendencia diaria y los errores recientes.
 
 <p align="center">
-  <img src="docs/dashboard_salud_pipeline.png" alt="Dashboard de salud del pipeline DataCo" width="100%">
+  <img src="docs/dashboard_salud_pipelin.png" alt="Dashboard de salud del pipeline DataCo" width="100%">
 </p>
 
 ### ⚙️ Infraestructura como código y CI/CD · 🚧 en construcción
