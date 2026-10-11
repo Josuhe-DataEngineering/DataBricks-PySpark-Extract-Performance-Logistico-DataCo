@@ -47,7 +47,7 @@ SharePoint ──▶ 🥉 Bronze ──▶ 🥈 Silver ──▶ 🥇 Gold ─�
 | **Arquitectura** | Medallion: Bronze → Silver → Gold |
 | **Orquestación** | Databricks Workflow (20 tasks, compute Serverless) |
 | **Modelo** | Esquema estrella con **SCD2** en dimensiones y hechos clave |
-| **Observabilidad** | Tabla `etl_log` + alerta a Slack ante cualquier fallo |
+| **Observabilidad** | Tabla `etl_log` + alerta a Slack ante cualquier fallo + vistas de salud y dashboard AI/BI |
 | **Entrega** | Excel de 4 pestañas enviado por correo (Microsoft Graph) |
 
 ---
@@ -159,7 +159,7 @@ Cada task de negocio (azul/dorado/violeta) tiene colgando su task `log_error` (l
 ## 📁 Organización del repositorio
 
 ```
-00_metadata/                  # control del pipeline (prepare / finalize) + logs
+00_metadata/                  # control del pipeline (prepare / finalize), logs y vistas de salud (03_observabilidad)
 01_ingest_sharepoint_bronze/  # ingesta a Bronze + logs
 02_silver_dimensiones/        # clientes, productos, ubicaciones + logs
 02_silver_hechos/             # pedidos, detalle de pedido + logs
@@ -190,24 +190,28 @@ Proyecto que **migra un proceso tradicional** (SQL Server Integration Services s
 
 ## 🚀 Capacidades de nivel productivo
 
-Más allá del pipeline base, el proyecto incorpora una capa completa de gobierno, calidad, automatización y analítica avanzada:
+Más allá del pipeline base, el proyecto suma una capa de gobierno, calidad, automatización y analítica avanzada. Estado: ✅ implementado · 🚧 en construcción.
 
-### 🛡️ Gobierno de datos (Unity Catalog)
+### 🛡️ Gobierno de datos (Unity Catalog) · 🚧 en construcción
 Etiquetas de propiedad por tabla, enmascaramiento dinámico de datos sensibles (como el correo del cliente) y filtros a nivel de fila según el grupo del usuario, todo gestionado en Unity Catalog.
 
-### ✅ Calidad de datos declarativa
+### ✅ Calidad de datos declarativa · 🚧 en construcción
 Motor de calidad basado en una tabla de reglas y una tabla de resultados: cada corrida valida las reglas aplicables y persiste el resultado, con constraints a nivel Delta que protegen la integridad de las tablas.
 
-### 📈 Dashboard de salud del pipeline
-Tablero de Databricks SQL sobre `etl_log` con la tasa de éxito por día, la duración promedio por task, la volumetría por capa y los últimos errores.
+### 📈 Dashboard de salud del pipeline · ✅ implementado
+Dashboard AI/BI "Salud del pipeline DataCo", construido sobre las vistas de salud del esquema de control (última ejecución, histórico y errores). Muestra el estado de la última ejecución, la duración por notebook, la tendencia diaria y los errores recientes.
 
-### ⚙️ Infraestructura como código y CI/CD
+<p align="center">
+  <img src="docs/dashboard_salud_pipeline.png" alt="Dashboard de salud del pipeline DataCo" width="100%">
+</p>
+
+### ⚙️ Infraestructura como código y CI/CD · 🚧 en construcción
 Todo el entorno descrito con Databricks Asset Bundles y desplegado con GitHub Actions (lint, validación y despliegue), con separación de ambientes dev y prod.
 
-### 🔄 Ingesta incremental
+### 🔄 Ingesta incremental · 🚧 en construcción
 Ingesta con Auto Loader para el procesamiento incremental de archivos a medida que llegan al almacenamiento de objetos.
 
-### 🤖 Capa de Machine Learning
+### 🤖 Capa de Machine Learning · 🚧 en construcción
 La capa Gold alimenta un modelo predictivo que anticipa el riesgo de retraso en los envíos, integrando el Lakehouse con el ciclo de MLOps.
 
 ---
